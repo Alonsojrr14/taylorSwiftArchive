@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taylor Swift Archive - Arquivo Completo</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="header__content">
+        <h1 class="header__title">
+          <span class="header__icon">🎵</span>
+          Taylor Swift Archive
+        </h1>
+        <p class="header__subtitle">Arquivo completo de entrevistas, performances e conteúdo</p>
+      </div>
+    </div>
+  </header>
+
+  <section class="filters-section">
+    <div class="container">
+      <div class="filters">
+        <div class="filters__group">
+          <label for="eraFilter" class="filters__label">Era</label>
+          <select id="eraFilter" class="filters__select">
+            <option value="">Todas as Eras</option>
+          </select>
+        </div>
+        
+        <div class="filters__group">
+          <label for="typeFilter" class="filters__label">Tipo</label>
+          <select id="typeFilter" class="filters__select">
+            <option value="">Todos os Tipos</option>
+          </select>
+        </div>
+        
+        <div class="filters__group">
+          <label for="interviewerFilter" class="filters__label">Entrevistador</label>
+          <select id="interviewerFilter" class="filters__select">
+            <option value="">Todos os Entrevistadores</option>
+          </select>
+        </div>
+
+        <button id="clearFilters" class="filters__clear">
+          <span>Limpar Filtros</span>
+        </button>
+      </div>
+
+      <div class="results-counter">
+        <span id="resultsCount">Carregando...</span>
+      </div>
+    </div>
+  </section>
+
+  <main class="main">
+    <div class="container">
+      <div id="loading" class="loading">
+        <div class="loading__spinner"></div>
+        <p>Carregando arquivo...</p>
+      </div>
+
+      <div id="error" class="error" style="display: none;">
+        <div class="error__icon">⚠️</div>
+        <h3>Erro ao carregar dados</h3>
+        <p id="errorMessage"></p>
+        <button id="retryButton" class="error__retry">Tentar Novamente</button>
+      </div>
+
+      <div id="content" class="content" style="display: none;"></div>
+
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-state__icon">🔍</div>
+        <h3>Nenhum resultado encontrado</h3>
+        <p>Tente ajustar os filtros para encontrar o que procura.</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; ZeroByte 2025 Taylor Swift Archive.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
