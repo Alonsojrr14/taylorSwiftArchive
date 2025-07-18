@@ -380,3 +380,24 @@ class TaylorArchive {
     })
   }
   
+  // Seleciona a seção de filtros
+  const filtersSection = document.querySelector('.filters-section');
+  const showFiltersBtn = document.getElementById('showFiltersBtn');
+
+  window.addEventListener('scroll', function() {
+    let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    if (scrollTop > 50) {
+      filtersSection.classList.add('oculto');
+      showFiltersBtn.style.display = 'block';
+    } else {
+      filtersSection.classList.remove('oculto');
+      showFiltersBtn.style.display = 'none';
+    }
+  });
+
+  showFiltersBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    filtersSection.classList.remove('oculto');
+    showFiltersBtn.style.display = 'none';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
