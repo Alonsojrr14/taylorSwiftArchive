@@ -48,22 +48,6 @@ This is a **static app** — no build tools or dependencies required.
 
 ---
 
-## 🌐 Publishing with GitHub Pages
-
-Already deployed here: [Taylor Swift Archive Live](https://alonsojrr14.github.io/taylorSwiftArchive/)  
-
-Steps if you want to redeploy:  
-
-1. Go to **Settings → Pages**  
-2. Under **Build and deployment**, choose **Deploy from a branch**  
-3. Select branch `main` and folder `/ (root)`  
-4. Save → your site will be available at:  
-   ```
-   https://alonsojrr14.github.io/taylorSwiftArchive/
-   ```
-
----
-
 ## 🧾 Data format (`dataTaylor.json`)
 
 The archive uses JSON entries to describe each interview. Example:
