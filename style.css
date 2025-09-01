@@ -75,6 +75,7 @@
   --era-evermore: #a16207;
   --era-midnights: #1e1b4b;
   --era-ttpd: #6b7280;
+  --era-tloas: #FF5C33;
 }
 
 html {
@@ -554,6 +555,9 @@ body {
 .card--ttpd {
   --card-color: var(--era-ttpd);
 }
+.card--tloas {
+  --card-color: var(--era-tloas);
+}
 
 .card[class*="card--"]::before {
   background: var(--card-color);
@@ -636,6 +640,10 @@ body {
 }
 .era-title--ttpd {
   background: var(--era-ttpd);
+  color: white;
+}
+.era-title--tloas {
+  background: var(--era-tloas);
   color: white;
 }
 

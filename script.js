@@ -2,11 +2,7 @@ class TaylorArchive {
   constructor() {
     this.rawData = []
     this.filteredData = []
-    this.currentFilters = {
-      era: "",
-      type: "",
-      interviewer: "",
-    }
+    this.currentFilters = { era: "", type: "", interviewer: "" }
 
     this.elements = {
       loading: document.getElementById("loading"),
@@ -60,6 +56,18 @@ class TaylorArchive {
       "MIDNIGHTS ERA": "Midnights",
       "TTPD ERA": "The Tortured Poets Department",
       "TLOAS ERA": "The Life of a Showgirl",
+      "TLOAS": "The Life of a Showgirl",
+      "THE LIFE OF A SHOWGIRL": "The Life of a Showgirl",
+      "TTPD": "The Tortured Poets Department",
+    }
+
+    this.normalizeEraName = (raw) => {
+      if (!raw) return null
+      const key = String(raw).normalize("NFKC").replace(/\s+/g, " ").trim().toUpperCase()
+      if (this.eraCanonical[key]) return this.eraCanonical[key]
+      const uiMatch = Object.values(this.eraCanonical).find((v) => v.toUpperCase() === key)
+      if (uiMatch) return uiMatch
+      return String(raw).trim()
     }
 
     this.init()
@@ -71,34 +79,29 @@ class TaylorArchive {
   }
 
   setupEventListeners() {
-    this.elements.eraFilter.addEventListener("change", (e) => {
+    this.elements.eraFilter?.addEventListener("change", (e) => {
       this.currentFilters.era = e.target.value
       this.applyFilters()
     })
-
-    this.elements.typeFilter.addEventListener("change", (e) => {
+    this.elements.typeFilter?.addEventListener("change", (e) => {
       this.currentFilters.type = e.target.value
       this.applyFilters()
     })
-
-    this.elements.interviewerFilter.addEventListener("change", (e) => {
+    this.elements.interviewerFilter?.addEventListener("change", (e) => {
       this.currentFilters.interviewer = e.target.value
       this.applyFilters()
     })
+    this.elements.clearFilters?.addEventListener("click", () => this.clearAllFilters())
+    this.elements.retryButton?.addEventListener("click", () => this.loadData())
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") this.clearAllFilters() })
+  }
 
-    this.elements.clearFilters.addEventListener("click", () => {
-      this.clearAllFilters()
-    })
-
-    this.elements.retryButton.addEventListener("click", () => {
-      this.loadData()
-    })
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        this.clearAllFilters()
-      }
-    })
+  pick(obj, ...keys) {
+    for (const k of keys) {
+      const v = obj?.[k]
+      if (v !== undefined && v !== null && String(v).trim() !== "") return String(v).trim()
+    }
+    return null
   }
 
   async loadData() {
@@ -107,171 +110,92 @@ class TaylorArchive {
 
       const response = await fetch("dataTaylor.json")
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
-
       const data = await response.json()
       if (!Array.isArray(data)) throw new Error("Invalid data format")
 
       this.rawData = data.map((it) => {
-        let name =
-          (it.subject && String(it.subject).trim()) ||
-          (it.outlet && String(it.outlet).trim()) ||
-          null
+        const subject = this.pick(it, "subject", "Name", "name", "title", "Title")
+        const outlet  = this.pick(it, "outlet", "Outlet", "source", "Source")
+        const url     = this.pick(it, "url", "Link", "link")
+        const tag     = this.pick(it, "tag", "Type", "type", "category", "Category")
+        const author  = this.pick(it, "author", "Interviewer", "Author")
+        const date    = this.pick(it, "date", "Conduct Date", "Release Date")
+        const notes   = this.pick(it, "content", "Notes/Content", "notes", "description", "Description")
 
+        const eraRaw  = this.pick(it, "era", "Era", "ERA")
+        const eraUI   = eraRaw ? this.normalizeEraName(eraRaw) : "Sem Era"
+
+        let name = subject || outlet || null
+        if (!name && url) { try { name = new URL(url).hostname } catch {} }
         if (!name) {
-          try {
-            if (it.url) name = new URL(it.url).hostname
-          } catch { /* ignore */ }
+          const pieces = []
+          if (outlet) pieces.push(outlet)
+          if (tag) pieces.push(tag)
+          name = pieces.length ? pieces.join(" — ") : "(sem título)"
         }
-        if (!name) name = "(sem título)"
-
-        const eraKey = it.era ? String(it.era).toUpperCase().trim() : ""
-        const eraUI = this.eraCanonical[eraKey] || "Sem Era"
-
-        const notesOrContent = it.content || it.notes || null
-
-        const date = it.date || null
 
         return {
           Name: name,
-          Type: it.tag || null,
-          Interviewer: it.author || null,
+          Type: tag || null,
+          Interviewer: author || null,
           Era: eraUI,
-          "Conduct Date": date,
-          "Release Date": date,
-          "Notes/Content": notesOrContent,
-          Link: it.url || null,
+          "Conduct Date": date || null,
+          "Release Date": date || null,
+          "Notes/Content": notes || null,
+          Link: url || null,
           _raw: it,
         }
       })
 
       this.populateFilters()
       this.applyFilters()
+
     } catch (error) {
       this.showError(error.message)
     }
   }
 
   showLoading() {
-    this.elements.loading.style.display = "block"
-    this.elements.error.style.display = "none"
-    this.elements.content.style.display = "none"
-    this.elements.emptyState.style.display = "none"
+    this.elements.loading && (this.elements.loading.style.display = "block")
+    this.elements.error && (this.elements.error.style.display = "none")
+    this.elements.content && (this.elements.content.style.display = "none")
+    this.elements.emptyState && (this.elements.emptyState.style.display = "none")
   }
-
   showError(message) {
-    this.elements.loading.style.display = "none"
-    this.elements.error.style.display = "block"
-    this.elements.content.style.display = "none"
-    this.elements.emptyState.style.display = "none"
-    this.elements.errorMessage.textContent = message
+    this.elements.loading && (this.elements.loading.style.display = "none")
+    this.elements.error && (this.elements.error.style.display = "block")
+    this.elements.content && (this.elements.content.style.display = "none")
+    this.elements.emptyState && (this.elements.emptyState.style.display = "none")
+    if (this.elements.errorMessage) this.elements.errorMessage.textContent = message
   }
-
   showContent() {
-    this.elements.loading.style.display = "none"
-    this.elements.error.style.display = "none"
-    this.elements.content.style.display = "block"
-    this.elements.emptyState.style.display = "none"
+    this.elements.loading && (this.elements.loading.style.display = "none")
+    this.elements.error && (this.elements.error.style.display = "none")
+    this.elements.content && (this.elements.content.style.display = "block")
+    this.elements.emptyState && (this.elements.emptyState.style.display = "none")
   }
-
   showEmptyState() {
-    this.elements.loading.style.display = "none"
-    this.elements.error.style.display = "none"
-    this.elements.content.style.display = "none"
-    this.elements.emptyState.style.display = "block"
+    this.elements.loading && (this.elements.loading.style.display = "none")
+    this.elements.error && (this.elements.error.style.display = "none")
+    this.elements.content && (this.elements.content.style.display = "none")
+    this.elements.emptyState && (this.elements.emptyState.style.display = "block")
   }
 
   populateFilters() {
     const eras = new Set()
     const types = new Set()
     const interviewers = new Set()
-
+  
     this.rawData.forEach((item) => {
       if (item.Era) eras.add(item.Era)
-      if (item.Type) types.add(item.Type)
-      if (item.Interviewer) interviewers.add(item.Interviewer)
+      types.add(item.Type || "—")
+      interviewers.add(item.Interviewer || "—")
     })
-
+  
     this.clearSelectOptions(this.elements.eraFilter)
     this.clearSelectOptions(this.elements.typeFilter)
     this.clearSelectOptions(this.elements.interviewerFilter)
-
-    ;[...eras].sort().forEach((era) => this.addSelectOption(this.elements.eraFilter, era))
-    ;[...types].sort().forEach((type) => this.addSelectOption(this.elements.typeFilter, type))
-    ;[...interviewers].sort().forEach((interviewer) =>
-      this.addSelectOption(this.elements.interviewerFilter, interviewer)
-    )
-  }
-
-  clearSelectOptions(select) {
-    while (select.children.length > 1) {
-      select.removeChild(select.lastChild)
-    }
-  }
-
-  addSelectOption(select, value) {
-    const option = document.createElement("option")
-    option.value = value
-    option.textContent = value
-    select.appendChild(option)
-  }
-
-  applyFilters() {
-    this.filteredData = this.rawData.filter((item) => {
-      if (!item.Name || !item.Type) return false
-
-      const eraMatch = !this.currentFilters.era || item.Era === this.currentFilters.era
-      const typeMatch = !this.currentFilters.type || item.Type === this.currentFilters.type
-      const interviewerMatch =
-        !this.currentFilters.interviewer || item.Interviewer === this.currentFilters.interviewer
-
-      return eraMatch && typeMatch && interviewerMatch
-    })
-
-    this.updateResultsCount()
-    this.renderContent()
-  }
-
-  clearAllFilters() {
-    this.currentFilters = { era: "", type: "", interviewer: "" }
-    this.elements.eraFilter.value = ""
-    this.elements.typeFilter.value = ""
-    this.elements.interviewerFilter.value = ""
-    this.applyFilters()
-  }
-
-  updateResultsCount() {
-    const count = this.filteredData.length
-    const total = this.rawData.length
-    this.elements.resultsCount.textContent = `Mostrando ${count} de ${total} itens`
-  }
-
-  renderContent() {
-    if (this.filteredData.length === 0) {
-      this.showEmptyState()
-      return
-    }
-
-    this.showContent()
-
-    const groupedData = this.groupByEra(this.filteredData)
-
-    this.elements.content.innerHTML = ""
-
-    Object.entries(groupedData).forEach(([era, items]) => {
-      const eraSection = this.createEraSection(era, items)
-      this.elements.content.appendChild(eraSection)
-    })
-  }
-
-  groupByEra(data) {
-    const grouped = {}
-
-    data.forEach((item) => {
-      const era = item.Era || "Sem Era"
-      if (!grouped[era]) grouped[era] = []
-      grouped[era].push(item)
-    })
-
+  
     const eraOrder = [
       "Pre-Debut",
       "Debut",
@@ -289,19 +213,103 @@ class TaylorArchive {
       "Evermore",
       "Midnights",
       "The Tortured Poets Department",
-      "The Life of a Showgirl", // novo
+      "The Life of a Showgirl",
       "Sem Era",
+    ]
+  
+    eraOrder.forEach((era) => {
+      if (eras.has(era)) {
+        this.addSelectOption(this.elements.eraFilter, era)
+      }
+    })
+  
+    eras.forEach((era) => {
+      if (!eraOrder.includes(era)) {
+        this.addSelectOption(this.elements.eraFilter, era)
+      }
+    })
+  
+    ;[...types].sort().forEach((type) =>
+      this.addSelectOption(this.elements.typeFilter, type)
+    )
+    ;[...interviewers].sort().forEach((i) =>
+      this.addSelectOption(this.elements.interviewerFilter, i)
+    )
+  }
+  
+
+  clearSelectOptions(select) {
+    if (!select) return
+    while (select.children.length > 1) select.removeChild(select.lastChild)
+  }
+  addSelectOption(select, value) {
+    if (!select) return
+    const option = document.createElement("option")
+    option.value = value
+    option.textContent = value
+    select.appendChild(option)
+  }
+
+  applyFilters() {
+    this.filteredData = this.rawData.filter((item) => {
+      if (!item.Name) return false
+      const eraMatch = !this.currentFilters.era || item.Era === this.currentFilters.era
+      const typeMatch = !this.currentFilters.type || (item.Type || "—") === this.currentFilters.type
+      const interviewerMatch =
+        !this.currentFilters.interviewer || (item.Interviewer || "—") === this.currentFilters.interviewer
+      return eraMatch && typeMatch && interviewerMatch
+    })
+
+    this.updateResultsCount()
+    this.renderContent()
+  }
+
+  clearAllFilters() {
+    this.currentFilters = { era: "", type: "", interviewer: "" }
+    this.elements.eraFilter && (this.elements.eraFilter.value = "")
+    this.elements.typeFilter && (this.elements.typeFilter.value = "")
+    this.elements.interviewerFilter && (this.elements.interviewerFilter.value = "")
+    this.applyFilters()
+  }
+
+  updateResultsCount() {
+    const count = this.filteredData.length
+    const total = this.rawData.length
+    this.elements.resultsCount && (this.elements.resultsCount.textContent = `Mostrando ${count} de ${total} itens`)
+  }
+
+  renderContent() {
+    if (!this.elements.content) return
+    if (this.filteredData.length === 0) { this.showEmptyState(); return }
+
+    this.showContent()
+    const groupedData = this.groupByEra(this.filteredData)
+    this.elements.content.innerHTML = ""
+
+    Object.entries(groupedData).forEach(([era, items]) => {
+      const eraSection = this.createEraSection(era, items)
+      this.elements.content.appendChild(eraSection)
+    })
+  }
+
+  groupByEra(data) {
+    const grouped = {}
+    data.forEach((item) => {
+      const era = item.Era || "Sem Era"
+      if (!grouped[era]) grouped[era] = []
+      grouped[era].push(item)
+    })
+
+    const eraOrder = [
+      "Pre-Debut","Debut","Fearless","Fearless (Taylor's Version)",
+      "Speak Now","Speak Now (Taylor's Version)","Red","Red (Taylor's Version)",
+      "1989","1989 (Taylor's Version)","Reputation","Lover","Folklore","Evermore",
+      "Midnights","The Tortured Poets Department","The Life of a Showgirl","Sem Era",
     ]
 
     const sortedGrouped = {}
-    eraOrder.forEach((era) => {
-      if (grouped[era]) sortedGrouped[era] = grouped[era]
-    })
-
-    Object.keys(grouped).forEach((era) => {
-      if (!sortedGrouped[era]) sortedGrouped[era] = grouped[era]
-    })
-
+    eraOrder.forEach((era) => { if (grouped[era]) sortedGrouped[era] = grouped[era] })
+    Object.keys(grouped).forEach((era) => { if (!sortedGrouped[era]) sortedGrouped[era] = grouped[era] })
     return sortedGrouped
   }
 
@@ -323,20 +331,17 @@ class TaylorArchive {
     })
 
     section.appendChild(grid)
-
     return section
   }
 
   createCard(item, era) {
     const card = document.createElement("article")
     card.className = `card card--${this.getEraClass(era)}`
-
     card.innerHTML = `
       <header class="card__header">
         <h3 class="card__title">${this.escapeHtml(item.Name)}</h3>
-        <span class="card__type">${this.escapeHtml(item.Type)}</span>
+        <span class="card__type">${this.escapeHtml(item.Type || "—")}</span>
       </header>
-      
       <div class="card__meta">
         <div class="card__meta-item">
           <span class="card__meta-label">Data da Entrevista:</span>
@@ -348,37 +353,26 @@ class TaylorArchive {
         </div>
         <div class="card__meta-item">
           <span class="card__meta-label">Entrevistador:</span>
-          <span class="card__meta-value">${this.escapeHtml(item.Interviewer) || "—"}</span>
+          <span class="card__meta-value">${this.escapeHtml(item.Interviewer || "—")}</span>
         </div>
       </div>
-      
       <div class="card__content">
-        <p class="card__description">${this.escapeHtml(item["Notes/Content"]) || "Sem descrição disponível."}</p>
+        <p class="card__description">${this.escapeHtml(item["Notes/Content"] || "Sem descrição disponível.")}</p>
         ${item.Link ? `<a href="${this.escapeHtml(item.Link)}" target="_blank" rel="noopener noreferrer" class="card__link">🔗 Ver fonte</a>` : ""}
       </div>
     `
-
     return card
   }
 
-  getEraClass(era) {
-    return this.eraColors[era] || "default"
-  }
+  getEraClass(era) { return this.eraColors[era] || "default" }
 
   formatDate(dateString) {
     if (!dateString) return null
     try {
       const date = new Date(dateString)
-      const valid = !isNaN(date.getTime())
-      if (!valid) return dateString
-      return date.toLocaleDateString("pt-BR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    } catch {
-      return dateString
-    }
+      if (isNaN(date.getTime())) return dateString
+      return date.toLocaleDateString("pt-BR", { year: "numeric", month: "long", day: "numeric" })
+    } catch { return dateString }
   }
 
   escapeHtml(text) {
@@ -389,26 +383,26 @@ class TaylorArchive {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  new TaylorArchive()
-})
+document.addEventListener("DOMContentLoaded", () => new TaylorArchive())
 
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((registration) => {
-        console.log("SW registered: ", registration)
-      })
-      .catch((registrationError) => {
-        console.log("SW registration failed: ", registrationError)
-      })
+  window.addEventListener("load", async () => {
+    try {
+      const resp = await fetch("/sw.js", { method: "HEAD" })
+      if (resp.ok) {
+        const reg = await navigator.serviceWorker.register("/sw.js")
+        console.log("SW registered:", reg)
+      } else {
+        console.log("SW skip: /sw.js não encontrado")
+      }
+    } catch (err) {
+      console.log("SW skip:", err?.message || err)
+    }
   })
 }
 
 const filtersSection = document.querySelector(".filters-section")
 const showFiltersBtn = document.getElementById("showFiltersBtn")
-
 window.addEventListener("scroll", function () {
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop
   if (!filtersSection || !showFiltersBtn) return
@@ -420,7 +414,6 @@ window.addEventListener("scroll", function () {
     showFiltersBtn.style.display = "none"
   }
 })
-
 if (showFiltersBtn) {
   showFiltersBtn.addEventListener("click", function (e) {
     e.stopPropagation()
