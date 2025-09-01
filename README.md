@@ -22,10 +22,21 @@ Browse and filter by **era**, **type of content**, or **interviewer**. Each era 
 
 ```
 taylorSwiftArchive/
-├─ index.html        # Main page (HTML)
-├─ style.css         # Styling and era color palettes (CSS)
-├─ script.js         # Filtering and rendering logic (JS)
-└─ dataTaylor.json   # Interviews database
+├─ assets/
+│  └─ icons/             # Favicons and PWA icons
+│     ├─ android-chrome-192x192.png
+│     ├─ android-chrome-512x512.png
+│     ├─ apple-touch-icon.png
+│     ├─ favicon-16x16.png
+│     ├─ favicon-32x32.png
+│     ├─ favicon.ico
+│     └─ site.webmanifest
+├─ dataTaylor.json       # Interviews database
+├─ index.html            # Main page
+├─ style.css             # Styles and era color palettes
+├─ script.js             # Filtering and rendering logic
+└─ README.md             # Project documentation
+
 ```
 
 ---
