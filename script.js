@@ -14,6 +14,7 @@ class TaylorArchive {
       typeFilter: document.getElementById("typeFilter"),
       interviewerFilter: document.getElementById("interviewerFilter"),
       clearFilters: document.getElementById("clearFilters"),
+      applyFilters: document.getElementById("applyFilters"),
       retryButton: document.getElementById("retryButton"),
       errorMessage: document.getElementById("errorMessage"),
     }
@@ -79,22 +80,25 @@ class TaylorArchive {
   }
 
   setupEventListeners() {
-    this.elements.eraFilter?.addEventListener("change", (e) => {
-      this.currentFilters.era = e.target.value
-      this.applyFilters()
-    })
-    this.elements.typeFilter?.addEventListener("change", (e) => {
-      this.currentFilters.type = e.target.value
-      this.applyFilters()
-    })
-    this.elements.interviewerFilter?.addEventListener("change", (e) => {
-      this.currentFilters.interviewer = e.target.value
-      this.applyFilters()
-    })
+    const isMobile = window.matchMedia("(max-width: 768px)").matches
+  
+    if (isMobile) {
+      this.elements.eraFilter?.addEventListener("change", (e) => { this.currentFilters.era = e.target.value })
+      this.elements.typeFilter?.addEventListener("change", (e) => { this.currentFilters.type = e.target.value })
+      this.elements.interviewerFilter?.addEventListener("change", (e) => { this.currentFilters.interviewer = e.target.value })
+      this.elements.applyFilters?.addEventListener("click", () => this.applyFilters())
+    } else {
+      this.elements.eraFilter?.addEventListener("change", (e) => { this.currentFilters.era = e.target.value; this.applyFilters() })
+      this.elements.typeFilter?.addEventListener("change", (e) => { this.currentFilters.type = e.target.value; this.applyFilters() })
+      this.elements.interviewerFilter?.addEventListener("change", (e) => { this.currentFilters.interviewer = e.target.value; this.applyFilters() })
+      this.elements.applyFilters?.addEventListener("click", () => this.applyFilters())
+    }
+  
     this.elements.clearFilters?.addEventListener("click", () => this.clearAllFilters())
     this.elements.retryButton?.addEventListener("click", () => this.loadData())
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") this.clearAllFilters() })
   }
+  
 
   pick(obj, ...keys) {
     for (const k of keys) {
@@ -401,25 +405,81 @@ if ("serviceWorker" in navigator) {
   })
 }
 
-const filtersSection = document.querySelector(".filters-section")
-const showFiltersBtn = document.getElementById("showFiltersBtn")
-window.addEventListener("scroll", function () {
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-  if (!filtersSection || !showFiltersBtn) return
-  if (scrollTop > 50) {
-    filtersSection.classList.add("oculto")
-    showFiltersBtn.style.display = "block"
-  } else {
-    filtersSection.classList.remove("oculto")
-    showFiltersBtn.style.display = "none"
-  }
-})
-if (showFiltersBtn) {
-  showFiltersBtn.addEventListener("click", function (e) {
-    e.stopPropagation()
+(() => {
+  const filtersSection  = document.querySelector(".filters-section")
+  const showFiltersBtn  = document.getElementById("showFiltersBtn")
+  const filtersBackdrop = document.getElementById("filtersBackdrop")
+
+  function openFiltersOverlay() {
     if (!filtersSection) return
     filtersSection.classList.remove("oculto")
-    showFiltersBtn.style.display = "none"
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    filtersSection.classList.add("overlay")
+    filtersBackdrop?.classList.add("is-open")
+    filtersSection.setAttribute("role", "dialog")
+    filtersSection.setAttribute("aria-modal", "true")
+
+    if (showFiltersBtn) {
+      showFiltersBtn.textContent = "Fechar"
+      showFiltersBtn.setAttribute("aria-label", "Fechar filtros")
+      showFiltersBtn.setAttribute("aria-expanded", "true")
+      showFiltersBtn.style.display = "block"
+    }
+  }
+
+  function closeFiltersOverlay() {
+    if (!filtersSection) return
+    filtersSection.classList.remove("overlay")
+    filtersBackdrop?.classList.remove("is-open")
+    filtersSection.removeAttribute("role")
+    filtersSection.removeAttribute("aria-modal")
+
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    const shouldHideBar = scrollTop > 50
+
+    if (shouldHideBar) {
+      filtersSection.classList.add("oculto")
+      if (showFiltersBtn) showFiltersBtn.style.display = "block"
+    } else {
+      filtersSection.classList.remove("oculto")
+      if (showFiltersBtn) showFiltersBtn.style.display = "none"
+    }
+
+    if (showFiltersBtn) {
+      showFiltersBtn.textContent = "Filtrar"
+      showFiltersBtn.setAttribute("aria-label", "Mostrar filtros")
+      showFiltersBtn.setAttribute("aria-expanded", "false")
+    }
+  }
+
+  showFiltersBtn?.addEventListener("click", (e) => {
+    e.stopPropagation()
+    if (filtersSection?.classList.contains("overlay")) {
+      closeFiltersOverlay()
+    } else {
+      openFiltersOverlay()
+    }
   })
-}
+
+  filtersBackdrop?.addEventListener("click", closeFiltersOverlay)
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && filtersSection?.classList.contains("overlay")) {
+      closeFiltersOverlay()
+    }
+  })
+
+  window.addEventListener("scroll", () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    if (!filtersSection || !showFiltersBtn) return
+    if (!filtersSection.classList.contains("overlay")) {
+      if (scrollTop > 50) {
+        filtersSection.classList.add("oculto")
+        showFiltersBtn.style.display = "block"
+      } else {
+        filtersSection.classList.remove("oculto")
+        showFiltersBtn.style.display = "none"
+      }
+    }
+  })
+})();
+

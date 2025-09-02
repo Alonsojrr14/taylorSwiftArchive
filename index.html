@@ -59,20 +59,25 @@
             <option value="">Todos os Entrevistadores</option>
           </select>
         </div>
-
-        <button id="clearFilters" class="filters__clear">
+      
+        <button id="clearFilters" class="filters__clear" type="button">
           <span>Limpar Filtros</span>
         </button>
+      
+        <button id="applyFilters" class="filters__apply" type="button">
+          <span>Aplicar Filtros</span>
+        </button>
       </div>
-
+  
       <div class="results-counter">
         <span id="resultsCount">Carregando...</span>
       </div>
     </div>
-    <button id="showFiltersBtn" class="show-filters-btn" style="display: none;">
-      Mostrar Filtros
-    </button>
   </section>
+
+  <button id="showFiltersBtn" class="show-filters-btn" style="display: none;">
+    Filtrar
+  </button>
 
   <main class="main">
     <div class="container">
@@ -103,6 +108,8 @@
       <p>&copy; ZeroByte 2025 - Taylor Swift Archive.</p>
     </div>
   </footer>
+
+  <div id="filtersBackdrop" class="filters-backdrop" aria-hidden="true"></div>
 
   <script src="script.js"></script>
 </body>
